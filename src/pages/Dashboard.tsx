@@ -1,365 +1,253 @@
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { BookOpen, Upload, Eye, Edit, Trash2, Share, Download, Plus, Search } from "lucide-react";
-import { Link } from "react-router-dom";
-import { useState } from "react";
+import { BookOpen, Upload, Eye, Download, Settings, LogOut, Users, BarChart3 } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import UserManagement from "@/components/UserManagement";
+
+// Mock data for catalogs
+const mockCatalogs = [
+  {
+    id: "1",
+    title: "Catálogo Primavera/Verão 2024",
+    description: "Coleção completa da temporada com todas as novidades",
+    uploadDate: "2024-01-15",
+    status: "converted",
+    slug: "primavera-verao-2024",
+    fileSize: "15.2 MB",
+    pages: 64,
+  },
+  {
+    id: "2",
+    title: "Linha Executiva Corporativa",
+    description: "Produtos profissionais para ambiente corporativo",
+    uploadDate: "2024-01-10",
+    status: "converting",
+    slug: "",
+    fileSize: "8.7 MB",
+    pages: 32,
+  },
+  {
+    id: "3",
+    title: "Catálogo Infantil",
+    description: "Produtos especiais para o público infantil",
+    uploadDate: "2024-01-08",
+    status: "converted",
+    slug: "catalogo-infantil",
+    fileSize: "22.1 MB",
+    pages: 96,
+  },
+];
 
 const Dashboard = () => {
-  const [catalogs, setCatalogs] = useState([
-    {
-      id: 1,
-      title: "Catálogo Primavera 2024",
-      description: "Nova coleção de roupas e acessórios para a temporada",
-      status: "publicado",
-      views: 1247,
-      slug: "catalogo-primavera-2024",
-      created_at: "2024-03-15",
-      file_size: "2.3 MB"
-    },
-    {
-      id: 2,
-      title: "Móveis de Escritório",
-      description: "Linha completa de móveis corporativos",
-      status: "processando",
-      views: 0,
-      slug: "moveis-escritorio",
-      created_at: "2024-03-14",
-      file_size: "4.7 MB"
-    },
-    {
-      id: 3,
-      title: "Eletrônicos 2024",
-      description: "Smartphones, tablets e acessórios",
-      status: "publicado",
-      views: 892,
-      slug: "eletronicos-2024",
-      created_at: "2024-03-10",
-      file_size: "1.8 MB"
-    }
-  ]);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("catalogs");
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const [newCatalog, setNewCatalog] = useState({ title: "", description: "", file: null });
-
-  const handleUpload = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newCatalog.title || !newCatalog.file) {
-      toast({
-        title: "Erro",
-        description: "Por favor, preencha todos os campos obrigatórios.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Simulate upload
-    const newId = catalogs.length + 1;
-    const slug = newCatalog.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-    
-    setCatalogs([
-      {
-        id: newId,
-        title: newCatalog.title,
-        description: newCatalog.description,
-        status: "processando",
-        views: 0,
-        slug: slug,
-        created_at: new Date().toISOString().split('T')[0],
-        file_size: "2.1 MB"
-      },
-      ...catalogs
-    ]);
-
-    setNewCatalog({ title: "", description: "", file: null });
-    
+  const handleLogout = () => {
+    logout();
     toast({
-      title: "Upload iniciado!",
-      description: "Seu catálogo está sendo processado. Você será notificado quando estiver pronto.",
+      title: "Logout realizado",
+      description: "Você foi desconectado com sucesso",
     });
+    navigate("/login");
   };
-
-  const deleteCatalog = (id: number) => {
-    setCatalogs(catalogs.filter(catalog => catalog.id !== id));
-    toast({
-      title: "Catálogo removido",
-      description: "O catálogo foi removido com sucesso.",
-    });
-  };
-
-  const copyLink = (slug: string) => {
-    const link = `${window.location.origin}/visualizar/${slug}`;
-    navigator.clipboard.writeText(link);
-    toast({
-      title: "Link copiado!",
-      description: "O link do catálogo foi copiado para a área de transferência.",
-    });
-  };
-
-  const filteredCatalogs = catalogs.filter(catalog =>
-    catalog.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    catalog.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "publicado":
-        return <Badge className="bg-green-100 text-green-800">Publicado</Badge>;
-      case "processando":
-        return <Badge className="bg-yellow-100 text-yellow-800">Processando</Badge>;
-      case "erro":
-        return <Badge variant="destructive">Erro</Badge>;
-      default:
-        return <Badge variant="secondary">Rascunho</Badge>;
-    }
+    const statusConfig = {
+      converted: { label: "Convertido", className: "bg-green-100 text-green-800" },
+      converting: { label: "Convertendo", className: "bg-yellow-100 text-yellow-800" },
+      error: { label: "Erro", className: "bg-red-100 text-red-800" },
+    };
+    
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.error;
+    
+    return (
+      <Badge className={config.className}>
+        {config.label}
+      </Badge>
+    );
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b shadow-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center space-x-2">
-            <BookOpen className="h-8 w-8 text-brand-600" />
-            <span className="text-2xl font-bold bg-gradient-to-r from-brand-600 to-brand-700 bg-clip-text text-transparent">
-              Leililind Catálogos
-            </span>
-          </Link>
-          
-          <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-600">Olá, Admin</span>
-            <Button variant="outline" size="sm">
-              Sair
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <div className="container mx-auto px-4 py-8">
-        {/* Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total de Catálogos</p>
-                  <p className="text-3xl font-bold text-gray-900">{catalogs.length}</p>
-                </div>
-                <BookOpen className="h-8 w-8 text-brand-600" />
+    <ProtectedRoute>
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <header className="bg-white border-b">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <Link to="/" className="flex items-center space-x-2">
+                  <BookOpen className="h-8 w-8 text-brand-600" />
+                  <span className="text-xl font-bold text-brand-600">
+                    Leililind Catálogos
+                  </span>
+                </Link>
+                <span className="text-gray-400">|</span>
+                <span className="text-gray-600">Painel Administrativo</span>
               </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Visualizações Totais</p>
-                  <p className="text-3xl font-bold text-gray-900">
-                    {catalogs.reduce((acc, cat) => acc + cat.views, 0).toLocaleString()}
-                  </p>
-                </div>
-                <Eye className="h-8 w-8 text-green-600" />
+              <div className="flex items-center space-x-4">
+                <span className="text-sm text-gray-600">
+                  Olá, <strong>{user?.username}</strong>
+                </span>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleLogout}
+                  className="text-red-600 hover:text-red-700"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sair
+                </Button>
               </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Publicados</p>
-                  <p className="text-3xl font-bold text-gray-900">
-                    {catalogs.filter(cat => cat.status === "publicado").length}
-                  </p>
-                </div>
-                <Share className="h-8 w-8 text-blue-600" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Processando</p>
-                  <p className="text-3xl font-bold text-gray-900">
-                    {catalogs.filter(cat => cat.status === "processando").length}
-                  </p>
-                </div>
-                <Upload className="h-8 w-8 text-yellow-600" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Actions Bar */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-8 items-start sm:items-center justify-between">
-          <div className="flex-1 max-w-md">
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Buscar catálogos..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
             </div>
           </div>
-          
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button className="bg-brand-600 hover:bg-brand-700">
-                <Plus className="mr-2 h-4 w-4" />
-                Novo Catálogo
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>Novo Catálogo</DialogTitle>
-                <DialogDescription>
-                  Faça upload de um arquivo PDF para criar um novo flipbook
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleUpload} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Título *</Label>
-                  <Input
-                    id="title"
-                    value={newCatalog.title}
-                    onChange={(e) => setNewCatalog({...newCatalog, title: e.target.value})}
-                    placeholder="Ex: Catálogo Verão 2024"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="description">Descrição</Label>
-                  <Textarea
-                    id="description"
-                    value={newCatalog.description}
-                    onChange={(e) => setNewCatalog({...newCatalog, description: e.target.value})}
-                    placeholder="Descreva o conteúdo do catálogo..."
-                    rows={3}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="file">Arquivo PDF *</Label>
-                  <Input
-                    id="file"
-                    type="file"
-                    accept=".pdf"
-                    onChange={(e) => setNewCatalog({...newCatalog, file: e.target.files?.[0] || null})}
-                    required
-                  />
-                  <p className="text-xs text-gray-500">Máximo 10MB</p>
-                </div>
-                <Button type="submit" className="w-full bg-brand-600 hover:bg-brand-700">
-                  <Upload className="mr-2 h-4 w-4" />
-                  Fazer Upload
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </div>
+        </header>
 
-        {/* Catalogs List */}
-        <div className="grid gap-6">
-          {filteredCatalogs.map((catalog) => (
-            <Card key={catalog.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900 truncate">
-                        {catalog.title}
-                      </h3>
-                      {getStatusBadge(catalog.status)}
-                    </div>
-                    <p className="text-gray-600 mb-2">{catalog.description}</p>
-                    <div className="flex items-center gap-4 text-sm text-gray-500">
-                      <span>Criado em {new Date(catalog.created_at).toLocaleDateString('pt-BR')}</span>
-                      <span>{catalog.file_size}</span>
-                      {catalog.status === "publicado" && (
-                        <span className="flex items-center gap-1">
-                          <Eye className="h-4 w-4" />
-                          {catalog.views.toLocaleString()} visualizações
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-2 ml-4">
-                    {catalog.status === "publicado" && (
-                      <>
-                        <Link to={`/visualizar/${catalog.slug}`}>
-                          <Button variant="outline" size="sm">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => copyLink(catalog.slug)}
-                        >
-                          <Share className="h-4 w-4" />
-                        </Button>
-                      </>
-                    )}
-                    <Button variant="outline" size="sm">
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => deleteCatalog(catalog.id)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+        {/* Main Content */}
+        <main className="container mx-auto px-4 py-8">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
+            <p className="text-gray-600">Gerencie seus catálogos e configurações</p>
+          </div>
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total de Catálogos</CardTitle>
+                <BookOpen className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{mockCatalogs.length}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Convertidos</CardTitle>
+                <BarChart3 className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {mockCatalogs.filter(c => c.status === 'converted').length}
                 </div>
               </CardContent>
             </Card>
-          ))}
-          
-          {filteredCatalogs.length === 0 && (
             <Card>
-              <CardContent className="p-12 text-center">
-                <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  {searchTerm ? "Nenhum catálogo encontrado" : "Nenhum catálogo criado"}
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  {searchTerm 
-                    ? "Tente usar outros termos de busca"
-                    : "Comece criando seu primeiro catálogo digital"
-                  }
-                </p>
-                {!searchTerm && (
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button className="bg-brand-600 hover:bg-brand-700">
-                        <Plus className="mr-2 h-4 w-4" />
-                        Criar Primeiro Catálogo
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-md">
-                      {/* Same dialog content as above */}
-                    </DialogContent>
-                  </Dialog>
-                )}
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Em Conversão</CardTitle>
+                <Settings className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {mockCatalogs.filter(c => c.status === 'converting').length}
+                </div>
               </CardContent>
             </Card>
-          )}
-        </div>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Usuários</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">3</div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Tabs */}
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="mb-6">
+              <TabsTrigger value="catalogs">Catálogos</TabsTrigger>
+              <TabsTrigger value="users">Usuários</TabsTrigger>
+              <TabsTrigger value="settings">Configurações</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="catalogs">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>Catálogos</CardTitle>
+                      <CardDescription>
+                        Gerencie seus catálogos digitais
+                      </CardDescription>
+                    </div>
+                    <Button className="bg-brand-600 hover:bg-brand-700">
+                      <Upload className="h-4 w-4 mr-2" />
+                      Novo Catálogo
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {mockCatalogs.map((catalog) => (
+                      <div key={catalog.id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="font-semibold">{catalog.title}</h3>
+                            {getStatusBadge(catalog.status)}
+                          </div>
+                          <p className="text-sm text-gray-600 mb-1">{catalog.description}</p>
+                          <div className="flex items-center gap-4 text-xs text-gray-500">
+                            <span>Enviado em {new Date(catalog.uploadDate).toLocaleDateString('pt-BR')}</span>
+                            <span>{catalog.fileSize}</span>
+                            <span>{catalog.pages} páginas</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {catalog.status === 'converted' && catalog.slug && (
+                            <Link to={`/visualizar/${catalog.slug}`}>
+                              <Button variant="outline" size="sm">
+                                <Eye className="h-4 w-4 mr-2" />
+                                Visualizar
+                              </Button>
+                            </Link>
+                          )}
+                          <Button variant="outline" size="sm">
+                            <Download className="h-4 w-4 mr-2" />
+                            Download
+                          </Button>
+                          <Button variant="outline" size="sm">
+                            <Settings className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="users">
+              <UserManagement />
+            </TabsContent>
+
+            <TabsContent value="settings">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Configurações</CardTitle>
+                  <CardDescription>
+                    Configure as opções do sistema
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-600">
+                    Configurações gerais do sistema em desenvolvimento...
+                  </p>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </main>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 };
 
