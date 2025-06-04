@@ -1,5 +1,5 @@
 
-import { BookOpen } from "lucide-react";
+import { BookOpen, Mail, Phone, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Footer = () => {
@@ -12,29 +12,43 @@ const Footer = () => {
               <BookOpen className="h-8 w-8 text-brand-400" />
               <span className="text-2xl font-bold">Leililind Catálogos</span>
             </Link>
-            <p className="text-gray-400 max-w-md">
-              A plataforma líder para transformar seus PDFs em flipbooks interativos. 
-              Crie, compartilhe e analise seus catálogos digitais.
+            <p className="text-gray-400 max-w-md mb-6">
+              Escritório de representação especializado em conectar marcas e clientes 
+              através de catálogos digitais interativos e modernos.
             </p>
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2 text-gray-400">
+                <Phone className="h-4 w-4" />
+                <span>(11) 99999-9999</span>
+              </div>
+              <div className="flex items-center space-x-2 text-gray-400">
+                <Mail className="h-4 w-4" />
+                <span>contato@leililind.com.br</span>
+              </div>
+              <div className="flex items-center space-x-2 text-gray-400">
+                <MapPin className="h-4 w-4" />
+                <span>São Paulo - SP, Brasil</span>
+              </div>
+            </div>
           </div>
           
           <div>
-            <h3 className="font-semibold mb-4">Produto</h3>
+            <h3 className="font-semibold mb-4">Navegação</h3>
             <ul className="space-y-2 text-gray-400">
-              <li><a href="#" className="hover:text-white transition-colors">Recursos</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Preços</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">API</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Integrações</a></li>
+              <li><a href="#recursos" className="hover:text-white transition-colors">Recursos</a></li>
+              <li><a href="#marcas" className="hover:text-white transition-colors">Nossas Marcas</a></li>
+              <li><Link to="/dashboard" className="hover:text-white transition-colors">Ver Catálogos</Link></li>
+              <li><a href="#contato" className="hover:text-white transition-colors">Contato</a></li>
             </ul>
           </div>
           
           <div>
-            <h3 className="font-semibold mb-4">Suporte</h3>
+            <h3 className="font-semibold mb-4">Representações</h3>
             <ul className="space-y-2 text-gray-400">
-              <li><a href="#" className="hover:text-white transition-colors">Documentação</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Tutoriais</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Contato</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Status</a></li>
+              <li><span className="hover:text-white transition-colors">Marca Premium A</span></li>
+              <li><span className="hover:text-white transition-colors">Marca Tecnológica B</span></li>
+              <li><span className="hover:text-white transition-colors">Marca Sustentável C</span></li>
+              <li><span className="hover:text-white transition-colors">Marca Industrial D</span></li>
             </ul>
           </div>
         </div>

@@ -1,9 +1,12 @@
 
 import { Button } from "@/components/ui/button";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Menu } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useState } from "react";
 
 const Header = () => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   return (
     <header className="border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -18,28 +21,49 @@ const Header = () => {
           <a href="#recursos" className="text-gray-600 hover:text-brand-600 transition-colors">
             Recursos
           </a>
-          <a href="#como-funciona" className="text-gray-600 hover:text-brand-600 transition-colors">
-            Como Funciona
+          <a href="#marcas" className="text-gray-600 hover:text-brand-600 transition-colors">
+            Nossas Marcas
           </a>
-          <Link to="/login">
-            <Button variant="outline" className="mr-2">
-              Entrar
-            </Button>
-          </Link>
+          <a href="#contato" className="text-gray-600 hover:text-brand-600 transition-colors">
+            Contato
+          </a>
           <Link to="/dashboard">
             <Button className="bg-brand-600 hover:bg-brand-700">
-              Dashboard
+              Ver Catálogos
             </Button>
           </Link>
         </nav>
         
-        <div className="md:hidden">
-          <Link to="/login">
-            <Button size="sm" className="bg-brand-600 hover:bg-brand-700">
-              Entrar
-            </Button>
-          </Link>
+        <div className="md:hidden flex items-center">
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="p-2 rounded-md hover:bg-gray-100"
+          >
+            <Menu className="h-6 w-6" />
+          </button>
         </div>
+
+        {/* Mobile menu */}
+        {isMenuOpen && (
+          <div className="absolute top-full left-0 right-0 bg-white border-b shadow-lg md:hidden">
+            <nav className="flex flex-col p-4 space-y-4">
+              <a href="#recursos" className="text-gray-600 hover:text-brand-600 transition-colors">
+                Recursos
+              </a>
+              <a href="#marcas" className="text-gray-600 hover:text-brand-600 transition-colors">
+                Nossas Marcas
+              </a>
+              <a href="#contato" className="text-gray-600 hover:text-brand-600 transition-colors">
+                Contato
+              </a>
+              <Link to="/dashboard">
+                <Button className="bg-brand-600 hover:bg-brand-700 w-full">
+                  Ver Catálogos
+                </Button>
+              </Link>
+            </nav>
+          </div>
+        )}
       </div>
     </header>
   );
