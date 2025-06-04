@@ -5,32 +5,46 @@ import Features from "@/components/Features";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Mail, Phone, MapPin } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ExternalLink, Mail, Phone, MapPin, Search } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useState } from "react";
 
 const Index = () => {
+  const [searchTerm, setSearchTerm] = useState("");
+
   const brands = [
     {
       name: "Marca Premium A",
       description: "Produtos de alta qualidade para segmento premium",
-      catalogCount: 3
+      catalogCount: 3,
+      category: "Premium"
     },
     {
       name: "Marca Tecnológica B",
       description: "Soluções inovadoras e tecnológicas",
-      catalogCount: 5
+      catalogCount: 5,
+      category: "Tecnologia"
     },
     {
       name: "Marca Sustentável C",
       description: "Produtos eco-friendly e sustentáveis",
-      catalogCount: 2
+      catalogCount: 2,
+      category: "Sustentabilidade"
     },
     {
       name: "Marca Industrial D",
       description: "Equipamentos e soluções industriais",
-      catalogCount: 4
+      catalogCount: 4,
+      category: "Industrial"
     }
   ];
+
+  const filteredBrands = brands.filter(brand =>
+    brand.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    brand.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    brand.category.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -45,15 +59,46 @@ const Index = () => {
             <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-brand-600 to-brand-700 bg-clip-text text-transparent">
               Nossas Marcas Representadas
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
               Trabalhamos com as principais marcas do mercado, oferecendo qualidade e inovação
             </p>
+            
+            {/* Search Bar for Brands */}
+            <div className="max-w-md mx-auto mb-8">
+              <div className="relative">
+                <Input
+                  type="text"
+                  placeholder="Buscar por marca, categoria ou produto..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-4 py-3 text-lg"
+                />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              </div>
+            </div>
           </div>
           
+          {/* Results Count */}
+          {searchTerm && (
+            <div className="text-center mb-6">
+              <p className="text-gray-600">
+                {filteredBrands.length === 0 
+                  ? "Nenhuma marca encontrada" 
+                  : `${filteredBrands.length} marca${filteredBrands.length !== 1 ? 's' : ''} encontrada${filteredBrands.length !== 1 ? 's' : ''}`
+                }
+              </p>
+            </div>
+          )}
+          
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {brands.map((brand, index) => (
+            {filteredBrands.map((brand, index) => (
               <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
                 <CardHeader className="text-center">
+                  <div className="mb-2">
+                    <span className="inline-block px-2 py-1 bg-brand-100 text-brand-700 text-xs rounded-full">
+                      {brand.category}
+                    </span>
+                  </div>
                   <CardTitle className="text-lg font-bold text-gray-800">{brand.name}</CardTitle>
                   <CardDescription className="text-gray-600">
                     {brand.description}
@@ -73,6 +118,26 @@ const Index = () => {
               </Card>
             ))}
           </div>
+          
+          {/* No Results Message */}
+          {searchTerm && filteredBrands.length === 0 && (
+            <div className="text-center py-12">
+              <div className="max-w-md mx-auto">
+                <h3 className="text-xl font-semibold text-gray-700 mb-2">
+                  Marca não encontrada
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  Não encontramos nenhuma marca que corresponda à sua busca.
+                </p>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setSearchTerm("")}
+                >
+                  Ver todas as marcas
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
