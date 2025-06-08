@@ -1,10 +1,10 @@
-
 import { useParams, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { BookOpen, ArrowLeft, Download, Share2 } from "lucide-react";
+import { BookOpen, ArrowLeft, Share2, Download } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
+import PDFViewer from "@/components/PDFViewer";
 
 interface Catalog {
   id: string;
@@ -77,9 +77,9 @@ const FlipbookViewer = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
-      <header className="bg-white border-b">
+      <header className="bg-white border-b flex-shrink-0">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -99,49 +99,36 @@ const FlipbookViewer = () => {
                 <Share2 className="h-4 w-4 mr-2" />
                 Compartilhar
               </Button>
-              <Button variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />
-                Download
-              </Button>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Catalog Viewer */}
-      <main className="container mx-auto px-4 py-8">
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-          {/* Catalog Info */}
-          <div className="p-6 border-b">
-            <div className="flex items-start justify-between">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">{catalog.title}</h2>
-                <p className="text-gray-600 mb-4">{catalog.description}</p>
-                <div className="flex items-center space-x-4 text-sm text-gray-500">
-                  <span>Marca: {catalog.brand}</span>
-                  <span>{catalog.pages} páginas</span>
-                  <span>{catalog.fileSize}</span>
-                  <span>Publicado em {new Date(catalog.uploadDate).toLocaleDateString('pt-BR')}</span>
-                </div>
+      {/* Catalog Info */}
+      <div className="bg-white border-b flex-shrink-0">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-start justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 mb-1">{catalog.title}</h2>
+              <p className="text-gray-600 mb-2">{catalog.description}</p>
+              <div className="flex items-center space-x-4 text-sm text-gray-500">
+                <span>Marca: {catalog.brand}</span>
+                <span>{catalog.pages} páginas</span>
+                <span>{catalog.fileSize}</span>
+                <span>Publicado em {new Date(catalog.uploadDate).toLocaleDateString('pt-BR')}</span>
               </div>
             </div>
           </div>
+        </div>
+      </div>
 
-          {/* Flipbook Container */}
-          <div className="aspect-[16/9] bg-gray-100 flex items-center justify-center">
-            <div className="text-center">
-              <BookOpen className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-700 mb-2">
-                Visualizador de Catálogo
-              </h3>
-              <p className="text-gray-500 mb-4">
-                O visualizador interativo será implementado aqui
-              </p>
-              <p className="text-sm text-gray-400">
-                Arquivo: {catalog.fileName || 'Catálogo'} • {catalog.pages} páginas
-              </p>
-            </div>
-          </div>
+      {/* PDF Viewer */}
+      <main className="flex-1 container mx-auto px-4 py-4">
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden h-full">
+          <PDFViewer 
+            fileName={catalog.fileName || 'catalog.pdf'} 
+            catalogTitle={catalog.title}
+          />
         </div>
       </main>
     </div>
