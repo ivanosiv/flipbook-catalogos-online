@@ -64,10 +64,10 @@ const FlipbookViewer = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <BookOpen className="h-12 w-12 mx-auto text-brand-600 animate-pulse mb-4" />
-          <p className="text-gray-600">Carregando catálogo...</p>
+          <BookOpen className="h-12 w-12 mx-auto text-primary animate-pulse mb-4" />
+          <p className="text-muted-foreground">Carregando catálogo...</p>
         </div>
       </div>
     );
@@ -78,9 +78,9 @@ const FlipbookViewer = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="bg-white border-b flex-shrink-0">
+      <header className="bg-card border-b flex-shrink-0">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -91,8 +91,8 @@ const FlipbookViewer = () => {
                 </Button>
               </Link>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">{catalog.title}</h1>
-                <p className="text-sm text-gray-600">{catalog.brand}</p>
+                <h1 className="text-xl font-bold text-foreground">{catalog.title}</h1>
+                <p className="text-sm text-muted-foreground">{catalog.brand}</p>
               </div>
             </div>
             <div className="flex items-center space-x-2">
@@ -106,13 +106,13 @@ const FlipbookViewer = () => {
       </header>
 
       {/* Catalog Info */}
-      <div className="bg-white border-b flex-shrink-0">
+      <div className="bg-card border-b flex-shrink-0">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-start justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 mb-1">{catalog.title}</h2>
-              <p className="text-gray-600 mb-2">{catalog.description}</p>
-              <div className="flex items-center space-x-4 text-sm text-gray-500">
+              <h2 className="text-lg font-semibold text-foreground mb-1">{catalog.title}</h2>
+              <p className="text-muted-foreground mb-2">{catalog.description}</p>
+              <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                 <span>Marca: {catalog.brand}</span>
                 <span>{catalog.pages} páginas</span>
                 <span>{catalog.fileSize}</span>
@@ -125,7 +125,7 @@ const FlipbookViewer = () => {
 
       {/* PDF Viewer */}
       <main className="flex-1 container mx-auto px-4 py-4">
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden h-full">
+        <div className="bg-card rounded-lg shadow-lg overflow-hidden h-full">
           <PDFViewer 
             fileName={catalog.fileName || 'catalog.pdf'} 
             catalogTitle={catalog.title}

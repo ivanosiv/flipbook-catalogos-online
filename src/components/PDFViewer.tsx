@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, RotateCw, Download } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
-// Configurar o worker do PDF.js
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+// Configurar o worker do PDF.js corretamente
+pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
 interface PDFViewerProps {
   fileName: string;
@@ -19,13 +19,16 @@ const PDFViewer = ({ fileName, catalogTitle }: PDFViewerProps) => {
   const [scale, setScale] = useState<number>(1.0);
   const [rotation, setRotation] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Para fins de demonstração, vamos simular um PDF
-  const pdfUrl = `/sample-catalog.pdf`;
+  // URL do PDF - usando um PDF de exemplo público
+  const pdfUrl = "https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf";
 
   const onDocumentLoadSuccess = useCallback(({ numPages }: { numPages: number }) => {
+    console.log('PDF carregado com sucesso:', numPages, 'páginas');
     setNumPages(numPages);
     setLoading(false);
+    setError(null);
     toast({
       title: "PDF carregado com sucesso!",
       description: `${numPages} páginas disponíveis`,
@@ -35,6 +38,7 @@ const PDFViewer = ({ fileName, catalogTitle }: PDFViewerProps) => {
   const onDocumentLoadError = useCallback((error: Error) => {
     console.error('Erro ao carregar PDF:', error);
     setLoading(false);
+    setError(error.message);
     toast({
       title: "Erro ao carregar PDF",
       description: "Não foi possível carregar o arquivo PDF",
@@ -42,12 +46,24 @@ const PDFViewer = ({ fileName, catalogTitle }: PDFViewerProps) => {
     });
   }, []);
 
+  const onPageLoadSuccess = useCallback(() => {
+    console.log(`Página ${pageNumber} carregada com sucesso`);
+  }, [pageNumber]);
+
   const goToPrevPage = () => {
     setPageNumber(prev => Math.max(prev - 1, 1));
   };
 
   const goToNextPage = () => {
     setPageNumber(prev => Math.min(prev + 1, numPages));
+  };
+
+  const goToFirstPage = () => {
+    setPageNumber(1);
+  };
+
+  const goToLastPage = () => {
+    setPageNumber(numPages);
   };
 
   const zoomIn = () => {
@@ -58,41 +74,80 @@ const PDFViewer = ({ fileName, catalogTitle }: PDFViewerProps) => {
     setScale(prev => Math.max(prev - 0.2, 0.5));
   };
 
+  const resetZoom = () => {
+    setScale(1.0);
+  };
+
   const rotate = () => {
     setRotation(prev => (prev + 90) % 360);
   };
 
   const handleDownload = () => {
     // Simular download do PDF
+    const link = document.createElement('a');
+    link.href = pdfUrl;
+    link.download = `${catalogTitle}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
     toast({
       title: "Download iniciado",
       description: `Baixando ${catalogTitle}...`,
     });
   };
 
+  if (error) {
+    return (
+      <div className="flex flex-col h-full bg-gray-50">
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center py-20">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-8 max-w-md mx-auto">
+              <h3 className="text-lg font-medium text-red-800 mb-2">
+                Erro ao carregar PDF
+              </h3>
+              <p className="text-red-600 mb-4">
+                {error}
+              </p>
+              <Button 
+                onClick={() => {
+                  setError(null);
+                  setLoading(true);
+                }} 
+                variant="outline"
+              >
+                Tentar novamente
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-full bg-gray-50">
-      {/* Barra de controles */}
-      <div className="bg-white border-b p-4 flex items-center justify-between">
+      {/* Barra de controles superior */}
+      <div className="bg-white border-b p-4 flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center space-x-2">
           <Button
             variant="outline"
             size="sm"
             onClick={goToPrevPage}
-            disabled={pageNumber <= 1}
+            disabled={pageNumber <= 1 || loading}
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
           
-          <span className="text-sm font-medium px-3">
-            {pageNumber} de {numPages}
+          <span className="text-sm font-medium px-3 whitespace-nowrap">
+            {loading ? "Carregando..." : `${pageNumber} de ${numPages}`}
           </span>
           
           <Button
             variant="outline"
             size="sm"
             onClick={goToNextPage}
-            disabled={pageNumber >= numPages}
+            disabled={pageNumber >= numPages || loading}
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
@@ -103,20 +158,24 @@ const PDFViewer = ({ fileName, catalogTitle }: PDFViewerProps) => {
             variant="outline"
             size="sm"
             onClick={zoomOut}
-            disabled={scale <= 0.5}
+            disabled={scale <= 0.5 || loading}
           >
             <ZoomOut className="h-4 w-4" />
           </Button>
           
-          <span className="text-sm font-medium px-2">
+          <button
+            onClick={resetZoom}
+            className="text-sm font-medium px-2 hover:underline"
+            disabled={loading}
+          >
             {Math.round(scale * 100)}%
-          </span>
+          </button>
           
           <Button
             variant="outline"
             size="sm"
             onClick={zoomIn}
-            disabled={scale >= 3.0}
+            disabled={scale >= 3.0 || loading}
           >
             <ZoomIn className="h-4 w-4" />
           </Button>
@@ -125,6 +184,7 @@ const PDFViewer = ({ fileName, catalogTitle }: PDFViewerProps) => {
             variant="outline"
             size="sm"
             onClick={rotate}
+            disabled={loading}
           >
             <RotateCw className="h-4 w-4" />
           </Button>
@@ -133,6 +193,7 @@ const PDFViewer = ({ fileName, catalogTitle }: PDFViewerProps) => {
             variant="outline"
             size="sm"
             onClick={handleDownload}
+            disabled={loading}
           >
             <Download className="h-4 w-4" />
           </Button>
@@ -141,88 +202,85 @@ const PDFViewer = ({ fileName, catalogTitle }: PDFViewerProps) => {
 
       {/* Área do visualizador */}
       <div className="flex-1 overflow-auto bg-gray-100 p-4">
-        <div className="flex justify-center">
-          {loading ? (
-            <div className="text-center py-20">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Carregando PDF...</p>
-            </div>
-          ) : (
-            <Document
-              file={pdfUrl}
-              onLoadSuccess={onDocumentLoadSuccess}
-              onLoadError={onDocumentLoadError}
-              loading={
-                <div className="text-center py-20">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600 mx-auto mb-4"></div>
-                  <p className="text-gray-600">Carregando documento...</p>
-                </div>
-              }
-              error={
-                <div className="text-center py-20">
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-8 max-w-md mx-auto">
-                    <h3 className="text-lg font-medium text-red-800 mb-2">
-                      Erro ao carregar PDF
-                    </h3>
-                    <p className="text-red-600 mb-4">
-                      Não foi possível carregar o arquivo PDF. Isso pode ser um problema temporário.
-                    </p>
-                    <div className="bg-yellow-50 border border-yellow-200 rounded p-4">
-                      <p className="text-sm text-yellow-800">
-                        <strong>Nota:</strong> Este é um ambiente de demonstração. 
-                        Em produção, o PDF seria carregado do servidor com o arquivo real.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              }
-            >
+        <div className="flex justify-center min-h-full">
+          <Document
+            file={pdfUrl}
+            onLoadSuccess={onDocumentLoadSuccess}
+            onLoadError={onDocumentLoadError}
+            loading={
+              <div className="text-center py-20">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Carregando documento...</p>
+              </div>
+            }
+            error={null}
+            options={{
+              cMapUrl: 'https://unpkg.com/pdfjs-dist@3.11.174/cmaps/',
+              cMapPacked: true,
+              standardFontDataUrl: 'https://unpkg.com/pdfjs-dist@3.11.174/standard_fonts/',
+            }}
+          >
+            {!loading && numPages > 0 && (
               <Page
                 pageNumber={pageNumber}
                 scale={scale}
                 rotate={rotation}
-                className="shadow-lg"
+                className="shadow-lg bg-white"
                 renderTextLayer={false}
                 renderAnnotationLayer={false}
+                onLoadSuccess={onPageLoadSuccess}
+                loading={
+                  <div className="bg-white border rounded p-8 text-center">
+                    <div className="animate-pulse">
+                      <div className="bg-gray-200 h-96 w-72 mx-auto"></div>
+                    </div>
+                  </div>
+                }
               />
-            </Document>
-          )}
+            )}
+          </Document>
         </div>
       </div>
 
       {/* Navegação por páginas na parte inferior */}
-      <div className="bg-white border-t p-4">
-        <div className="flex items-center justify-center space-x-4">
-          <Button
-            variant="outline"
-            onClick={() => setPageNumber(1)}
-            disabled={pageNumber === 1}
-          >
-            Primeira
-          </Button>
-          <Button
-            variant="outline"
-            onClick={goToPrevPage}
-            disabled={pageNumber <= 1}
-          >
-            Anterior
-          </Button>
-          <Button
-            variant="outline"
-            onClick={goToNextPage}
-            disabled={pageNumber >= numPages}
-          >
-            Próxima
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => setPageNumber(numPages)}
-            disabled={pageNumber === numPages}
-          >
-            Última
-          </Button>
+      {!loading && numPages > 0 && (
+        <div className="bg-white border-t p-4">
+          <div className="flex items-center justify-center space-x-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToFirstPage}
+              disabled={pageNumber === 1}
+            >
+              Primeira
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToPrevPage}
+              disabled={pageNumber <= 1}
+            >
+              Anterior
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToNextPage}
+              disabled={pageNumber >= numPages}
+            >
+              Próxima
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToLastPage}
+              disabled={pageNumber === numPages}
+            >
+              Última
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import Header from "../components/Header";
 import Hero from "../components/Hero";
@@ -9,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, BookOpen, Eye } from "lucide-react";
 import { Link } from "react-router-dom";
+import { createMockCatalogs } from "@/utils/mockData";
 
 interface Catalog {
   id: string;
@@ -28,6 +28,8 @@ const Index = () => {
   const [brands, setBrands] = useState<string[]>([]);
 
   useEffect(() => {
+    // Criar dados de exemplo se não existirem
+    createMockCatalogs();
     loadCatalogs();
   }, []);
 
