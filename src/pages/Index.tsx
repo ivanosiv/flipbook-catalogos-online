@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import Header from "../components/Header";
 import Hero from "../components/Hero";
@@ -34,11 +33,12 @@ const Index = () => {
   const loadCatalogs = () => {
     const storedCatalogs = localStorage.getItem('catalogos_data');
     if (storedCatalogs) {
-      const catalogsData = JSON.parse(storedCatalogs);
-      setCatalogs(catalogsData.filter((catalog: Catalog) => catalog.status === 'converted'));
+      const catalogsData: Catalog[] = JSON.parse(storedCatalogs);
+      const convertedCatalogs = catalogsData.filter((catalog: Catalog) => catalog.status === 'converted');
+      setCatalogs(convertedCatalogs);
       
-      // Extrair marcas únicas
-      const uniqueBrands = [...new Set(catalogsData.map((catalog: Catalog) => catalog.brand))];
+      // Extrair marcas únicas com tipagem correta
+      const uniqueBrands = [...new Set(convertedCatalogs.map((catalog: Catalog) => catalog.brand))].filter((brand): brand is string => typeof brand === 'string');
       setBrands(uniqueBrands);
     }
   };
