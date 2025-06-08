@@ -1,54 +1,46 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, Upload, Eye, Download, Settings, LogOut, Users, BarChart3 } from "lucide-react";
+import { BookOpen, Eye, Download, Settings, LogOut, Users, BarChart3 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import UserManagement from "@/components/UserManagement";
+import CatalogUpload from "@/components/CatalogUpload";
 
-// Mock data for catalogs
-const mockCatalogs = [
-  {
-    id: "1",
-    title: "Catálogo Primavera/Verão 2024",
-    description: "Coleção completa da temporada com todas as novidades",
-    uploadDate: "2024-01-15",
-    status: "converted",
-    slug: "primavera-verao-2024",
-    fileSize: "15.2 MB",
-    pages: 64,
-  },
-  {
-    id: "2",
-    title: "Linha Executiva Corporativa",
-    description: "Produtos profissionais para ambiente corporativo",
-    uploadDate: "2024-01-10",
-    status: "converting",
-    slug: "",
-    fileSize: "8.7 MB",
-    pages: 32,
-  },
-  {
-    id: "3",
-    title: "Catálogo Infantil",
-    description: "Produtos especiais para o público infantil",
-    uploadDate: "2024-01-08",
-    status: "converted",
-    slug: "catalogo-infantil",
-    fileSize: "22.1 MB",
-    pages: 96,
-  },
-];
+interface Catalog {
+  id: string;
+  title: string;
+  description: string;
+  brand: string;
+  uploadDate: string;
+  status: string;
+  slug: string;
+  fileSize: string;
+  pages: number;
+  fileName?: string;
+}
 
 const Dashboard = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, users } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("catalogs");
+  const [catalogs, setCatalogs] = useState<Catalog[]>([]);
+
+  useEffect(() => {
+    loadCatalogs();
+  }, []);
+
+  const loadCatalogs = () => {
+    const storedCatalogs = localStorage.getItem('catalogos_data');
+    if (storedCatalogs) {
+      setCatalogs(JSON.parse(storedCatalogs));
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -125,7 +117,7 @@ const Dashboard = () => {
                 <BookOpen className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{mockCatalogs.length}</div>
+                <div className="text-2xl font-bold">{catalogs.length}</div>
               </CardContent>
             </Card>
             <Card>
@@ -135,7 +127,7 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {mockCatalogs.filter(c => c.status === 'converted').length}
+                  {catalogs.filter(c => c.status === 'converted').length}
                 </div>
               </CardContent>
             </Card>
@@ -146,7 +138,7 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {mockCatalogs.filter(c => c.status === 'converting').length}
+                  {catalogs.filter(c => c.status === 'converting').length}
                 </div>
               </CardContent>
             </Card>
@@ -156,7 +148,7 @@ const Dashboard = () => {
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">3</div>
+                <div className="text-2xl font-bold">{users.length}</div>
               </CardContent>
             </Card>
           </div>
@@ -179,47 +171,53 @@ const Dashboard = () => {
                         Gerencie seus catálogos digitais
                       </CardDescription>
                     </div>
-                    <Button className="bg-brand-600 hover:bg-brand-700">
-                      <Upload className="h-4 w-4 mr-2" />
-                      Novo Catálogo
-                    </Button>
+                    <CatalogUpload onUploadSuccess={loadCatalogs} />
                   </div>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {mockCatalogs.map((catalog) => (
-                      <div key={catalog.id} className="flex items-center justify-between p-4 border rounded-lg">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h3 className="font-semibold">{catalog.title}</h3>
-                            {getStatusBadge(catalog.status)}
-                          </div>
-                          <p className="text-sm text-gray-600 mb-1">{catalog.description}</p>
-                          <div className="flex items-center gap-4 text-xs text-gray-500">
-                            <span>Enviado em {new Date(catalog.uploadDate).toLocaleDateString('pt-BR')}</span>
-                            <span>{catalog.fileSize}</span>
-                            <span>{catalog.pages} páginas</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {catalog.status === 'converted' && catalog.slug && (
-                            <Link to={`/visualizar/${catalog.slug}`}>
-                              <Button variant="outline" size="sm">
-                                <Eye className="h-4 w-4 mr-2" />
-                                Visualizar
-                              </Button>
-                            </Link>
-                          )}
-                          <Button variant="outline" size="sm">
-                            <Download className="h-4 w-4 mr-2" />
-                            Download
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            <Settings className="h-4 w-4" />
-                          </Button>
-                        </div>
+                    {catalogs.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500">
+                        <BookOpen className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                        <p>Nenhum catálogo encontrado</p>
+                        <p className="text-sm">Faça upload do seu primeiro catálogo</p>
                       </div>
-                    ))}
+                    ) : (
+                      catalogs.map((catalog) => (
+                        <div key={catalog.id} className="flex items-center justify-between p-4 border rounded-lg">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <h3 className="font-semibold">{catalog.title}</h3>
+                              {getStatusBadge(catalog.status)}
+                            </div>
+                            <p className="text-sm text-gray-600 mb-1">{catalog.description}</p>
+                            <div className="flex items-center gap-4 text-xs text-gray-500">
+                              <span>Marca: {catalog.brand}</span>
+                              <span>Enviado em {new Date(catalog.uploadDate).toLocaleDateString('pt-BR')}</span>
+                              <span>{catalog.fileSize}</span>
+                              <span>{catalog.pages} páginas</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {catalog.status === 'converted' && catalog.slug && (
+                              <Link to={`/visualizar/${catalog.slug}`}>
+                                <Button variant="outline" size="sm">
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  Visualizar
+                                </Button>
+                              </Link>
+                            )}
+                            <Button variant="outline" size="sm">
+                              <Download className="h-4 w-4 mr-2" />
+                              Download
+                            </Button>
+                            <Button variant="outline" size="sm">
+                              <Settings className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </CardContent>
               </Card>

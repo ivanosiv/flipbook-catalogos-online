@@ -1,201 +1,176 @@
 
-import Header from "@/components/Header";
-import Hero from "@/components/Hero";
-import Features from "@/components/Features";
-import Footer from "@/components/Footer";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
+import Header from "../components/Header";
+import Hero from "../components/Hero";
+import Features from "../components/Features";
+import Footer from "../components/Footer";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ExternalLink, Mail, Phone, MapPin, Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Search, BookOpen, Eye } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useState } from "react";
+
+interface Catalog {
+  id: string;
+  title: string;
+  description: string;
+  brand: string;
+  uploadDate: string;
+  status: string;
+  slug: string;
+  fileSize: string;
+  pages: number;
+}
 
 const Index = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [catalogs, setCatalogs] = useState<Catalog[]>([]);
+  const [brands, setBrands] = useState<string[]>([]);
 
-  const brands = [
-    {
-      name: "Marca Premium A",
-      description: "Produtos de alta qualidade para segmento premium",
-      catalogCount: 3,
-      category: "Premium"
-    },
-    {
-      name: "Marca Tecnológica B",
-      description: "Soluções inovadoras e tecnológicas",
-      catalogCount: 5,
-      category: "Tecnologia"
-    },
-    {
-      name: "Marca Sustentável C",
-      description: "Produtos eco-friendly e sustentáveis",
-      catalogCount: 2,
-      category: "Sustentabilidade"
-    },
-    {
-      name: "Marca Industrial D",
-      description: "Equipamentos e soluções industriais",
-      catalogCount: 4,
-      category: "Industrial"
+  useEffect(() => {
+    loadCatalogs();
+  }, []);
+
+  const loadCatalogs = () => {
+    const storedCatalogs = localStorage.getItem('catalogos_data');
+    if (storedCatalogs) {
+      const catalogsData = JSON.parse(storedCatalogs);
+      setCatalogs(catalogsData.filter((catalog: Catalog) => catalog.status === 'converted'));
+      
+      // Extrair marcas únicas
+      const uniqueBrands = [...new Set(catalogsData.map((catalog: Catalog) => catalog.brand))];
+      setBrands(uniqueBrands);
     }
-  ];
+  };
+
+  const filteredCatalogs = catalogs.filter(catalog =>
+    catalog.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    catalog.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const filteredBrands = brands.filter(brand =>
-    brand.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    brand.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    brand.category.toLowerCase().includes(searchTerm.toLowerCase())
+    brand.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="min-h-screen bg-white">
       <Header />
       <Hero />
       <Features />
       
-      {/* Brands Section */}
-      <section id="marcas" className="py-20 px-4 bg-gradient-to-br from-gray-50 to-blue-50">
-        <div className="container mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-brand-600 to-brand-700 bg-clip-text text-transparent">
-              Nossas Marcas Representadas
+      {/* Seção de Busca e Catálogos */}
+      <section id="marcas" className="py-20 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Nossos Catálogos
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-              Trabalhamos com as principais marcas do mercado, oferecendo qualidade e inovação
+            <p className="text-xl text-gray-600 mb-8">
+              Explore nossos catálogos digitais por marca
             </p>
             
-            {/* Search Bar for Brands */}
-            <div className="max-w-md mx-auto mb-8">
+            {/* Barra de Pesquisa */}
+            <div className="max-w-md mx-auto relative">
               <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   type="text"
-                  placeholder="Buscar por marca, categoria ou produto..."
+                  placeholder="Buscar marcas ou catálogos..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-3 text-lg"
+                  className="pl-10 pr-4"
                 />
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
               </div>
             </div>
           </div>
-          
-          {/* Results Count */}
+
+          {/* Resultados da Busca */}
           {searchTerm && (
-            <div className="text-center mb-6">
-              <p className="text-gray-600">
-                {filteredBrands.length === 0 
-                  ? "Nenhuma marca encontrada" 
-                  : `${filteredBrands.length} marca${filteredBrands.length !== 1 ? 's' : ''} encontrada${filteredBrands.length !== 1 ? 's' : ''}`
-                }
-              </p>
-            </div>
-          )}
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {filteredBrands.map((brand, index) => (
-              <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-                <CardHeader className="text-center">
-                  <div className="mb-2">
-                    <span className="inline-block px-2 py-1 bg-brand-100 text-brand-700 text-xs rounded-full">
-                      {brand.category}
-                    </span>
+            <div className="mb-8">
+              <h3 className="text-lg font-semibold mb-4">
+                Resultados para "{searchTerm}":
+              </h3>
+              {filteredBrands.length > 0 && (
+                <div className="mb-4">
+                  <h4 className="text-md font-medium mb-2 text-gray-700">Marcas encontradas:</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {filteredBrands.map((brand, index) => (
+                      <Button
+                        key={index}
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSearchTerm(brand)}
+                        className="text-brand-600 border-brand-200 hover:bg-brand-50"
+                      >
+                        {brand}
+                      </Button>
+                    ))}
                   </div>
-                  <CardTitle className="text-lg font-bold text-gray-800">{brand.name}</CardTitle>
-                  <CardDescription className="text-gray-600">
-                    {brand.description}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="text-center">
-                  <p className="text-sm text-brand-600 font-medium mb-3">
-                    {brand.catalogCount} catálogos disponíveis
-                  </p>
-                  <Link to="/dashboard">
-                    <Button size="sm" variant="outline" className="w-full">
-                      <ExternalLink className="mr-2 h-4 w-4" />
-                      Ver Catálogos
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-          
-          {/* No Results Message */}
-          {searchTerm && filteredBrands.length === 0 && (
-            <div className="text-center py-12">
-              <div className="max-w-md mx-auto">
-                <h3 className="text-xl font-semibold text-gray-700 mb-2">
-                  Marca não encontrada
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  Não encontramos nenhuma marca que corresponda à sua busca.
-                </p>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setSearchTerm("")}
-                >
-                  Ver todas as marcas
-                </Button>
-              </div>
+                </div>
+              )}
             </div>
           )}
+
+          {/* Grid de Catálogos */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredCatalogs.length > 0 ? (
+              filteredCatalogs.map((catalog) => (
+                <Card key={catalog.id} className="hover:shadow-lg transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                          {catalog.title}
+                        </h3>
+                        <p className="text-sm font-medium text-brand-600 mb-2">
+                          {catalog.brand}
+                        </p>
+                        <p className="text-gray-600 text-sm mb-4">
+                          {catalog.description}
+                        </p>
+                      </div>
+                      <BookOpen className="h-8 w-8 text-brand-600 flex-shrink-0" />
+                    </div>
+                    
+                    <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
+                      <span>{catalog.pages} páginas</span>
+                      <span>{catalog.fileSize}</span>
+                    </div>
+                    
+                    <Link to={`/visualizar/${catalog.slug}`}>
+                      <Button className="w-full bg-brand-600 hover:bg-brand-700">
+                        <Eye className="h-4 w-4 mr-2" />
+                        Visualizar Catálogo
+                      </Button>
+                    </Link>
+                  </CardContent>
+                </Card>
+              ))
+            ) : catalogs.length === 0 ? (
+              <div className="col-span-full text-center py-12">
+                <BookOpen className="h-16 w-16 mx-auto text-gray-300 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Nenhum catálogo disponível
+                </h3>
+                <p className="text-gray-600">
+                  Os catálogos aparecerão aqui assim que forem adicionados pelos administradores.
+                </p>
+              </div>
+            ) : (
+              <div className="col-span-full text-center py-12">
+                <Search className="h-16 w-16 mx-auto text-gray-300 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Nenhum resultado encontrado
+                </h3>
+                <p className="text-gray-600">
+                  Tente buscar por outro termo ou marca.
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </section>
-
-      {/* Contact Section */}
-      <section id="contato" className="py-20 px-4 bg-white">
-        <div className="container mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-brand-600 to-brand-700 bg-clip-text text-transparent">
-              Entre em Contato
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Fale conosco para mais informações sobre nossos produtos e representações
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            <Card className="border-0 shadow-lg text-center">
-              <CardHeader>
-                <div className="mx-auto w-16 h-16 bg-gradient-to-br from-brand-500 to-brand-600 rounded-2xl flex items-center justify-center mb-4">
-                  <Phone className="h-8 w-8 text-white" />
-                </div>
-                <CardTitle>Telefone</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">(11) 99999-9999</p>
-                <p className="text-gray-600">(11) 3333-3333</p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-lg text-center">
-              <CardHeader>
-                <div className="mx-auto w-16 h-16 bg-gradient-to-br from-brand-500 to-brand-600 rounded-2xl flex items-center justify-center mb-4">
-                  <Mail className="h-8 w-8 text-white" />
-                </div>
-                <CardTitle>Email</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">contato@leililind.com.br</p>
-                <p className="text-gray-600">vendas@leililind.com.br</p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-lg text-center">
-              <CardHeader>
-                <div className="mx-auto w-16 h-16 bg-gradient-to-br from-brand-500 to-brand-600 rounded-2xl flex items-center justify-center mb-4">
-                  <MapPin className="h-8 w-8 text-white" />
-                </div>
-                <CardTitle>Endereço</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">São Paulo - SP</p>
-                <p className="text-gray-600">Brasil</p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
+      
       <Footer />
     </div>
   );
