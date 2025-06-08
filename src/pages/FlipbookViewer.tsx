@@ -1,7 +1,8 @@
+
 import { useParams, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { BookOpen, ArrowLeft, Share2, Download } from "lucide-react";
+import { BookOpen, ArrowLeft, Share2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import PDFViewer from "@/components/PDFViewer";

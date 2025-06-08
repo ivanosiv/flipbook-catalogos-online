@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import Header from "../components/Header";
 import Hero from "../components/Hero";
@@ -37,9 +38,28 @@ const Index = () => {
       const convertedCatalogs = catalogsData.filter((catalog: Catalog) => catalog.status === 'converted');
       setCatalogs(convertedCatalogs);
       
-      // Extrair marcas únicas com tipagem correta
-      const uniqueBrands = [...new Set(convertedCatalogs.map((catalog: Catalog) => catalog.brand))].filter((brand): brand is string => typeof brand === 'string');
+      // Extrair marcas únicas
+      const uniqueBrands = [...new Set(convertedCatalogs.map((catalog: Catalog) => catalog.brand))];
       setBrands(uniqueBrands);
+    } else {
+      // Adicionar dados de exemplo se não houver catálogos
+      const sampleCatalogs = [
+        {
+          id: "1",
+          title: "Catálogo de Teste",
+          description: "Catálogo de demonstração do sistema",
+          brand: "teste",
+          uploadDate: new Date().toISOString(),
+          status: "converted",
+          slug: "teste",
+          fileSize: "0.6 MB",
+          pages: 110,
+          fileName: "teste.pdf"
+        }
+      ];
+      localStorage.setItem('catalogos_data', JSON.stringify(sampleCatalogs));
+      setCatalogs(sampleCatalogs);
+      setBrands(["teste"]);
     }
   };
 
